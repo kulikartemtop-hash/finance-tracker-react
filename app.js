@@ -44,31 +44,38 @@ let transactions = [];
 let currentFilter = 'month';
 
 const CATEGORY_KEYWORDS = {
-    '🛒 Продукты': ['пятерочка', 'магнит', 'ашан', 'лента', 'перекресток', 'дикси', 'вкусвилл', 'продукты', 'супермаркет'],
-    '🚕 Транспорт': ['яндекс', 'ситимобил', 'метро', 'такси', 'бензин', 'лукойл', 'газпром', 'каршеринг'],
-    '🍔 Кафе': ['ресторан', 'кафе', 'кофе', 'вкусно', 'шаверма', 'пицца', 'kfc', 'burger king', 'starbucks'],
-    '💊 Здоровье': ['аптека', 'ригла', 'лекарство', 'врач', 'клиника', 'стоматология'],    '🛍️ Покупки': ['zara', 'h&m', 'wildberries', 'ozon', 'одежда', 'обувь', 'маркетплейс'],
-    '🏠 Дом': ['квартплата', 'жкх', 'интернет', 'мтс', 'билайн', 'аренда', 'ремонт']
+    '🛒 Продукты': ['пятерочка', 'магнит', 'ашан', 'лента', 'перекресток', 'дикси', 'вкусвилл', 'продукты'],
+    '🚕 Транспорт': ['яндекс', 'ситимобил', 'метро', 'такси', 'бензин', 'лукойл', 'газпром'],
+    '🍔 Кафе': ['ресторан', 'кафе', 'кофе', 'вкусно', 'шаверма', 'пицца', 'kfc'],
+    '💊 Здоровье': ['аптека', 'ригла', 'лекарство', 'врач', 'клиника'],    '🛍️ Покупки': ['wildberries', 'ozon', 'одежда', 'обувь', 'маркетплейс'],
+    '🏠 Дом': ['квартплата', 'жкх', 'интернет', 'мтс', 'билайн', 'аренда']
 };
 
-// 1. Инициализация и загрузка данных
+// 1. Инициализация с ЗАЩИТОЙ от ошибок (try-catch)
 function loadData() {
-    const savedAccounts = localStorage.getItem('finance_accounts');
-    const savedTransactions = localStorage.getItem('finance_transactions');
-    
-    if (savedAccounts) {
-        accounts = JSON.parse(savedAccounts);
-    } else {
-        accounts = [
-            { id: 1, name: 'Т-Банк', balance: 0, icon: '🟡' },
-            { id: 2, name: 'Сбербанк', balance: 0, icon: '🟢' },
-            { id: 3, name: 'Наличные', balance: 0, icon: '💵' }
-        ];
-        saveData();
-    }
-    
-    if (savedTransactions) {
-        transactions = JSON.parse(savedTransactions);
+    try {
+        const savedAccounts = localStorage.getItem('finance_accounts');
+        const savedTransactions = localStorage.getItem('finance_transactions');
+        
+        if (savedAccounts) {
+            accounts = JSON.parse(savedAccounts);
+        } else {
+            accounts = [
+                { id: 1, name: 'Т-Банк', balance: 0, icon: '🟡' },
+                { id: 2, name: 'Сбербанк', balance: 0, icon: '🟢' },
+                { id: 3, name: 'Наличные', balance: 0, icon: '💵' }
+            ];
+            saveData();
+        }
+        
+        if (savedTransactions) {
+            transactions = JSON.parse(savedTransactions);
+        }
+    } catch (error) {
+        console.error("Ошибка чтения данных, выполняем сброс:", error);
+        localStorage.clear(); // Очищаем битые данные
+        location.reload();    // Перезагружаем страницу
+        return;
     }
     
     renderAccounts();
@@ -89,14 +96,14 @@ function saveData() {
 navBtns.forEach(btn => {
     btn.addEventListener('click', () => {
         const viewId = btn.dataset.view;
-        views.forEach(v => v.classList.remove('active'));
-        document.getElementById(viewId).classList.add('active');
+        views.forEach(v => v.classList.remove('active'));        document.getElementById(viewId).classList.add('active');
         navBtns.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
     });
 });
 
-// 3. Логика Счетовfunction renderAccounts() {
+// 3. Логика Счетов
+function renderAccounts() {
     accountsList.innerHTML = '';
     let total = 0;
     accounts.forEach(acc => {
@@ -115,7 +122,7 @@ navBtns.forEach(btn => {
 function updateAllAccountSelects() {
     const selects = [accountSelect, incomeAccountSelect, transferFromSelect, transferToSelect];
     selects.forEach(select => {
-        const currentVal = select.value; // Сохраняем текущий выбор, если он есть
+        const currentVal = select.value;
         select.innerHTML = '';
         accounts.forEach(acc => {
             const option = document.createElement('option');
@@ -130,22 +137,23 @@ function updateAllAccountSelects() {
 }
 
 addAccountBtn.addEventListener('click', () => {
-    const name = prompt('Введите название счета (например: Альфа-Банк, Копилка):');
+    const name = prompt('Введите название счета (например: Альфа-Банк):');
     if (name && name.trim()) {
         accounts.push({ id: Date.now(), name: name.trim(), balance: 0, icon: '💳' });
         saveData();
         updateAllAccountSelects();
+        alert('Счет "' + name.trim() + '" успешно добавлен!');
     }
 });
-
-// 4. Логика Расходов и Фильтрации
+// 4. Логика Расходов
 filterBtns.forEach(btn => {
     btn.addEventListener('click', () => {
         currentFilter = btn.dataset.filter;
         filterBtns.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         renderExpenses();
-    });});
+    });
+});
 
 function isDateInFilter(dateStr, filter) {
     const txDate = new Date(dateStr.split('.').reverse().join('-'));
@@ -163,11 +171,7 @@ function isDateInFilter(dateStr, filter) {
 function renderExpenses() {
     transactionList.innerHTML = '';
     let periodSum = 0;
-    
-    // Показываем только расходы, отфильтрованные по дате
-    const filteredTx = transactions
-        .filter(t => t.type === 'expense' && isDateInFilter(t.date, currentFilter))
-        .sort((a, b) => b.id - a.id);
+    const filteredTx = transactions.filter(t => t.type === 'expense' && isDateInFilter(t.date, currentFilter)).sort((a, b) => b.id - a.id);
     
     filteredTx.forEach(t => {
         periodSum += t.amount;
@@ -186,43 +190,35 @@ function renderExpenses() {
         `;
         transactionList.appendChild(li);
     });
-    
     emptyState.style.display = filteredTx.length ? 'none' : 'block';
     const periodNames = { 'today': 'Сегодня', 'week': 'За неделю', 'month': 'За месяц' };
     periodLabel.textContent = `Расход ${periodNames[currentFilter].toLowerCase()}`;
     periodTotal.textContent = periodSum.toFixed(2) + ' ₽';
 }
-
 // 5. Сканирование и Добавление Расхода
-scanBtn.addEventListener('click', () => cameraInput.click());cameraInput.addEventListener('change', async function(event) {
+scanBtn.addEventListener('click', () => cameraInput.click());
+cameraInput.addEventListener('change', async function(event) {
     const file = event.target.files[0];
     if (!file) return;
-    
     loading.style.display = 'block';
     scanBtn.disabled = true;
-    
     try {
         const { data: { text } } = await Tesseract.recognize(file, 'rus+eng', {
             logger: m => { if (m.status === 'recognizing text') progress.textContent = Math.round(m.progress * 100); }
         });
-        
         const amountMatch = text.match(/(\d+[\.,]\d{2})/);
         if (amountMatch) amountInput.value = amountMatch[0].replace(',', '.');
-        
         const dateMatch = text.match(/(\d{2}\.\d{2}\.\d{4})/);
         descInput.value = dateMatch ? `Чек от ${dateMatch[0]}` : 'Покупка';
         
         const lowerText = text.toLowerCase();
         let detectedCategory = '📦 Другое';
         for (const [category, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
-            if (keywords.some(keyword => lowerText.includes(keyword))) { 
-                detectedCategory = category; 
-                break; 
-            }
+            if (keywords.some(keyword => lowerText.includes(keyword))) { detectedCategory = category; break; }
         }
         categoryInput.value = detectedCategory;
     } catch (error) {
-        alert('Ошибка распознавания. Попробуйте сделать фото четче.');
+        alert('Ошибка распознавания.');
     } finally {
         loading.style.display = 'none';
         scanBtn.disabled = false;
@@ -235,24 +231,19 @@ addBtn.addEventListener('click', () => {
     const accountId = parseInt(accountSelect.value);
     const description = descInput.value.trim() || 'Без описания';
     const category = categoryInput.value;
-    
     if (!amount || amount <= 0) return alert('Введите корректную сумму');
 
     const account = accounts.find(a => a.id === accountId);
     if (account) account.balance -= amount;
 
-    transactions.push({ 
-        id: Date.now(), type: 'expense', accountId, amount, description, category, 
-        date: new Date().toLocaleDateString('ru-RU')     });
-    
+    transactions.push({ id: Date.now(), type: 'expense', accountId, amount, description, category, date: new Date().toLocaleDateString('ru-RU') });
     saveData();
     updateAllAccountSelects();
     amountInput.value = ''; descInput.value = ''; categoryInput.value = '📦 Другое';
 });
 
 // 6. Логика Доходов
-addIncomeBtn.addEventListener('click', () => {
-    const amount = parseFloat(incomeAmountInput.value);
+addIncomeBtn.addEventListener('click', () => {    const amount = parseFloat(incomeAmountInput.value);
     const accountId = parseInt(incomeAccountSelect.value);
     let category = incomeTypeSelect.value;
     let description = incomeDescInput.value.trim();
@@ -266,11 +257,7 @@ addIncomeBtn.addEventListener('click', () => {
     const account = accounts.find(a => a.id === accountId);
     if (account) account.balance += amount;
 
-    transactions.push({ 
-        id: Date.now(), type: 'income', accountId, amount, description, category, 
-        date: new Date().toLocaleDateString('ru-RU') 
-    });
-    
+    transactions.push({ id: Date.now(), type: 'income', accountId, amount, description, category, date: new Date().toLocaleDateString('ru-RU') });
     saveData();
     updateAllAccountSelects();
     incomeAmountInput.value = ''; incomeDescInput.value = ''; incomeTypeSelect.value = '💼 Зарплата';
@@ -281,7 +268,6 @@ function renderIncomesAndTransfers() {
     let monthSum = 0;
     const today = new Date();
     
-    // Считаем доход только за текущий месяц для верхней цифры
     const monthIncomes = transactions.filter(t => {
         if (t.type !== 'income') return false;
         const txDate = new Date(t.date.split('.').reverse().join('-'));
@@ -291,45 +277,22 @@ function renderIncomesAndTransfers() {
     monthIncomes.forEach(t => monthSum += t.amount);
     monthIncomeTotal.textContent = monthSum.toFixed(2) + ' ₽';
 
-    // Показываем в списке и доходы, и переводы
-    const relevantTx = transactions        .filter(t => t.type === 'income' || t.type === 'transfer')
-        .sort((a, b) => b.id - a.id);
+    const relevantTx = transactions.filter(t => t.type === 'income' || t.type === 'transfer').sort((a, b) => b.id - a.id);
     
     relevantTx.forEach(t => {
         const li = document.createElement('li');
         li.className = 'transaction-item';
-        
         if (t.type === 'income') {
             const acc = accounts.find(a => a.id === t.accountId) || { name: 'Удален', icon: '❓' };
-            li.innerHTML = `
-                <div class="t-info">
-                    <span class="t-desc">${t.description}</span>
-                    <span class="t-date">${t.date} • ${acc.icon} ${acc.name}</span>
-                </div>
-                <div class="t-right">
-                    <span class="t-amount income">+${t.amount.toFixed(2)} ₽</span>
-                    <button class="btn-delete" onclick="deleteItem(${t.id})">🗑️</button>
-                </div>
-            `;
-        } else if (t.type === 'transfer') {
+            li.innerHTML = `<div class="t-info"><span class="t-desc">${t.description}</span><span class="t-date">${t.date} • ${acc.icon} ${acc.name}</span></div><div class="t-right"><span class="t-amount income">+${t.amount.toFixed(2)} ₽</span><button class="btn-delete" onclick="deleteItem(${t.id})">🗑️</button></div>`;
+        } else {
             const fromAcc = accounts.find(a => a.id === t.fromAccountId) || { name: 'Удален', icon: '❓' };
             const toAcc = accounts.find(a => a.id === t.toAccountId) || { name: 'Удален', icon: '❓' };
-            li.innerHTML = `
-                <div class="t-info">
-                    <span class="t-desc">🔄 ${t.description}</span>
-                    <span class="t-date">${t.date}</span>
-                </div>
-                <div class="t-right">
-                    <span class="t-amount transfer">${t.amount.toFixed(2)} ₽</span>
-                    <button class="btn-delete" onclick="deleteItem(${t.id})">🗑️</button>
-                </div>
-            `;
+            li.innerHTML = `<div class="t-info"><span class="t-desc">🔄 ${t.description}</span><span class="t-date">${t.date}</span></div><div class="t-right"><span class="t-amount transfer">${t.amount.toFixed(2)} ₽</span><button class="btn-delete" onclick="deleteItem(${t.id})">🗑️</button></div>`;
         }
         incomeList.appendChild(li);
     });
-    
-    emptyIncomeState.style.display = relevantTx.length ? 'none' : 'block';
-}
+    emptyIncomeState.style.display = relevantTx.length ? 'none' : 'block';}
 
 // 7. Логика Переводов
 transferBtn.addEventListener('click', () => {
@@ -337,57 +300,46 @@ transferBtn.addEventListener('click', () => {
     const toId = parseInt(transferToSelect.value);
     const amount = parseFloat(transferAmountInput.value);
 
-    if (fromId === toId) return alert('Выберите разные счета для перевода!');
-    if (!amount || amount <= 0) return alert('Введите корректную сумму');
+    if (fromId === toId) return alert('Выберите разные счета!');
+    if (!amount || amount <= 0) return alert('Введите сумму');
 
     const fromAcc = accounts.find(a => a.id === fromId);
     const toAcc = accounts.find(a => a.id === toId);
-    if (fromAcc.balance < amount) return alert(`Недостаточно средств на счете "${fromAcc.name}"`);
 
-    // Выполняем перевод
+    if (fromAcc.balance < amount) return alert('Недостаточно средств на счете "' + fromAcc.name + '"');
+
     fromAcc.balance -= amount;
     toAcc.balance += amount;
 
-    transactions.push({
-        id: Date.now(),
-        type: 'transfer',
-        fromAccountId: fromId,
-        toAccountId: toId,
-        amount: amount,
-        description: `${fromAcc.name} → ${toAcc.name}`,
-        date: new Date().toLocaleDateString('ru-RU')
-    });
-
+    transactions.push({ id: Date.now(), type: 'transfer', fromAccountId: fromId, toAccountId: toId, amount: amount, description: `${fromAcc.name} → ${toAcc.name}`, date: new Date().toLocaleDateString('ru-RU') });
     saveData();
     updateAllAccountSelects();
     transferAmountInput.value = '';
-    alert(`Успешно переведено ${amount} ₽`);
+    alert(`Переведено ${amount} ₽`);
 });
 
-// 8. Универсальное удаление (Безопасное)
+// 8. Универсальное удаление
 window.deleteItem = function(id) {
     const tx = transactions.find(t => t.id === id);
     if (!tx) return;
-    if (!confirm('Удалить эту операцию? Баланс счетов будет пересчитан.')) return;
+    if (!confirm('Удалить эту операцию?')) return;
 
-    // Отменяем влияние операции на балансы
     if (tx.type === 'expense') {
         const acc = accounts.find(a => a.id === tx.accountId);
-        if (acc) acc.balance += tx.amount; // Возвращаем деньги
+        if (acc) acc.balance += tx.amount;
     } else if (tx.type === 'income') {
         const acc = accounts.find(a => a.id === tx.accountId);
-        if (acc) acc.balance -= tx.amount; // Забираем начисленное
+        if (acc) acc.balance -= tx.amount;
     } else if (tx.type === 'transfer') {
         const fromAcc = accounts.find(a => a.id === tx.fromAccountId);
         const toAcc = accounts.find(a => a.id === tx.toAccountId);
-        if (fromAcc) fromAcc.balance += tx.amount; // Возвращаем отправителю
-        if (toAcc) toAcc.balance -= tx.amount;     // Забираем у получателя
+        if (fromAcc) fromAcc.balance += tx.amount;
+        if (toAcc) toAcc.balance -= tx.amount;
     }
 
-    // Удаляем из массива
     transactions = transactions.filter(t => t.id !== id);
     saveData();
     updateAllAccountSelects();
 };
-
-// Запуск приложенияloadData();
+// Запуск
+loadData();
