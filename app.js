@@ -38,20 +38,20 @@ const transferToSelect = document.getElementById('transferToSelect');
 const transferAmountInput = document.getElementById('transferAmountInput');
 const transferBtn = document.getElementById('transferBtn');
 
-// Состояние
+// Состояние приложения
 let accounts = [];
 let transactions = [];
 let currentFilter = 'month';
 
 const CATEGORY_KEYWORDS = {
-    '🛒 Продукты': ['пятерочка', 'магнит', 'ашан', 'лента', 'перекресток', 'дикси', 'вкусвилл', 'продукты'],
-    '🚕 Транспорт': ['яндекс', 'ситимобил', 'метро', 'такси', 'бензин', 'лукойл', 'газпром'],
-    '🍔 Кафе': ['ресторан', 'кафе', 'кофе', 'вкусно', 'шаверма', 'пицца', 'kfc', 'burger king'],
-    '💊 Здоровье': ['аптека', 'ригла', 'лекарство', 'врач', 'клиника'],    '🛍️ Покупки': ['zara', 'h&m', 'wildberries', 'ozon', 'одежда', 'обувь'],
-    '🏠 Дом': ['квартплата', 'жкх', 'интернет', 'мтс', 'билайн', 'аренда']
+    '🛒 Продукты': ['пятерочка', 'магнит', 'ашан', 'лента', 'перекресток', 'дикси', 'вкусвилл', 'продукты', 'супермаркет'],
+    '🚕 Транспорт': ['яндекс', 'ситимобил', 'метро', 'такси', 'бензин', 'лукойл', 'газпром', 'каршеринг'],
+    '🍔 Кафе': ['ресторан', 'кафе', 'кофе', 'вкусно', 'шаверма', 'пицца', 'kfc', 'burger king', 'starbucks'],
+    '💊 Здоровье': ['аптека', 'ригла', 'лекарство', 'врач', 'клиника', 'стоматология'],    '🛍️ Покупки': ['zara', 'h&m', 'wildberries', 'ozon', 'одежда', 'обувь', 'маркетплейс'],
+    '🏠 Дом': ['квартплата', 'жкх', 'интернет', 'мтс', 'билайн', 'аренда', 'ремонт']
 };
 
-// 1. Инициализация
+// 1. Инициализация и загрузка данных
 function loadData() {
     const savedAccounts = localStorage.getItem('finance_accounts');
     const savedTransactions = localStorage.getItem('finance_transactions');
@@ -74,7 +74,7 @@ function loadData() {
     renderAccounts();
     updateAllAccountSelects();
     renderExpenses();
-    renderIncomes();
+    renderIncomesAndTransfers();
 }
 
 function saveData() {
@@ -82,10 +82,10 @@ function saveData() {
     localStorage.setItem('finance_transactions', JSON.stringify(transactions));
     renderAccounts();
     renderExpenses();
-    renderIncomes();
+    renderIncomesAndTransfers();
 }
 
-// 2. Навигация
+// 2. Навигация по вкладкам
 navBtns.forEach(btn => {
     btn.addEventListener('click', () => {
         const viewId = btn.dataset.view;
@@ -115,6 +115,7 @@ navBtns.forEach(btn => {
 function updateAllAccountSelects() {
     const selects = [accountSelect, incomeAccountSelect, transferFromSelect, transferToSelect];
     selects.forEach(select => {
+        const currentVal = select.value; // Сохраняем текущий выбор, если он есть
         select.innerHTML = '';
         accounts.forEach(acc => {
             const option = document.createElement('option');
@@ -122,11 +123,14 @@ function updateAllAccountSelects() {
             option.textContent = `${acc.icon} ${acc.name} (${acc.balance.toFixed(2)} ₽)`;
             select.appendChild(option);
         });
+        if (currentVal && select.querySelector(`option[value="${currentVal}"]`)) {
+            select.value = currentVal;
+        }
     });
 }
 
 addAccountBtn.addEventListener('click', () => {
-    const name = prompt('Введите название счета (например: Альфа-Банк):');
+    const name = prompt('Введите название счета (например: Альфа-Банк, Копилка):');
     if (name && name.trim()) {
         accounts.push({ id: Date.now(), name: name.trim(), balance: 0, icon: '💳' });
         saveData();
@@ -134,20 +138,24 @@ addAccountBtn.addEventListener('click', () => {
     }
 });
 
-// 4. Логика Расходов
+// 4. Логика Расходов и Фильтрации
 filterBtns.forEach(btn => {
     btn.addEventListener('click', () => {
         currentFilter = btn.dataset.filter;
         filterBtns.forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         renderExpenses();
-    });
-});
+    });});
 
 function isDateInFilter(dateStr, filter) {
-    const txDate = new Date(dateStr.split('.').reverse().join('-'));    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const txDate = new Date(dateStr.split('.').reverse().join('-'));
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    
     if (filter === 'today') return txDate.getTime() === today.getTime();
-    if (filter === 'week') { const weekAgo = new Date(today); weekAgo.setDate(today.getDate() - 7); return txDate >= weekAgo; }
+    if (filter === 'week') { 
+        const weekAgo = new Date(today); weekAgo.setDate(today.getDate() - 7); 
+        return txDate >= weekAgo; 
+    }
     if (filter === 'month') return txDate.getMonth() === today.getMonth() && txDate.getFullYear() === today.getFullYear();
     return true;
 }
@@ -155,11 +163,15 @@ function isDateInFilter(dateStr, filter) {
 function renderExpenses() {
     transactionList.innerHTML = '';
     let periodSum = 0;
-    const filteredTx = transactions.filter(t => t.type === 'expense' && isDateInFilter(t.date, currentFilter)).sort((a, b) => b.id - a.id);
+    
+    // Показываем только расходы, отфильтрованные по дате
+    const filteredTx = transactions
+        .filter(t => t.type === 'expense' && isDateInFilter(t.date, currentFilter))
+        .sort((a, b) => b.id - a.id);
     
     filteredTx.forEach(t => {
         periodSum += t.amount;
-        const acc = accounts.find(a => a.id === t.accountId) || { name: 'Неизвестно', icon: '❓' };
+        const acc = accounts.find(a => a.id === t.accountId) || { name: 'Удален', icon: '❓' };
         const li = document.createElement('li');
         li.className = 'transaction-item';
         li.innerHTML = `
@@ -169,11 +181,12 @@ function renderExpenses() {
             </div>
             <div class="t-right">
                 <span class="t-amount expense">-${t.amount.toFixed(2)} ₽</span>
-                <button class="btn-delete" onclick="deleteTransaction(${t.id})">🗑️</button>
+                <button class="btn-delete" onclick="deleteItem(${t.id})">🗑️</button>
             </div>
         `;
         transactionList.appendChild(li);
     });
+    
     emptyState.style.display = filteredTx.length ? 'none' : 'block';
     const periodNames = { 'today': 'Сегодня', 'week': 'За неделю', 'month': 'За месяц' };
     periodLabel.textContent = `Расход ${periodNames[currentFilter].toLowerCase()}`;
@@ -181,28 +194,35 @@ function renderExpenses() {
 }
 
 // 5. Сканирование и Добавление Расхода
-scanBtn.addEventListener('click', () => cameraInput.click());
-cameraInput.addEventListener('change', async function(event) {
+scanBtn.addEventListener('click', () => cameraInput.click());cameraInput.addEventListener('change', async function(event) {
     const file = event.target.files[0];
     if (!file) return;
+    
     loading.style.display = 'block';
     scanBtn.disabled = true;
+    
     try {
         const { data: { text } } = await Tesseract.recognize(file, 'rus+eng', {
             logger: m => { if (m.status === 'recognizing text') progress.textContent = Math.round(m.progress * 100); }
         });
+        
         const amountMatch = text.match(/(\d+[\.,]\d{2})/);
         if (amountMatch) amountInput.value = amountMatch[0].replace(',', '.');
+        
         const dateMatch = text.match(/(\d{2}\.\d{2}\.\d{4})/);
-        descInput.value = dateMatch ? `Чек от ${dateMatch[0]}` : 'Покупка';        
+        descInput.value = dateMatch ? `Чек от ${dateMatch[0]}` : 'Покупка';
+        
         const lowerText = text.toLowerCase();
         let detectedCategory = '📦 Другое';
         for (const [category, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
-            if (keywords.some(keyword => lowerText.includes(keyword))) { detectedCategory = category; break; }
+            if (keywords.some(keyword => lowerText.includes(keyword))) { 
+                detectedCategory = category; 
+                break; 
+            }
         }
         categoryInput.value = detectedCategory;
     } catch (error) {
-        alert('Ошибка распознавания.');
+        alert('Ошибка распознавания. Попробуйте сделать фото четче.');
     } finally {
         loading.style.display = 'none';
         scanBtn.disabled = false;
@@ -215,35 +235,27 @@ addBtn.addEventListener('click', () => {
     const accountId = parseInt(accountSelect.value);
     const description = descInput.value.trim() || 'Без описания';
     const category = categoryInput.value;
+    
     if (!amount || amount <= 0) return alert('Введите корректную сумму');
 
     const account = accounts.find(a => a.id === accountId);
     if (account) account.balance -= amount;
 
-    transactions.push({ id: Date.now(), type: 'expense', accountId, amount, description, category, date: new Date().toLocaleDateString('ru-RU') });
+    transactions.push({ 
+        id: Date.now(), type: 'expense', accountId, amount, description, category, 
+        date: new Date().toLocaleDateString('ru-RU')     });
+    
     saveData();
     updateAllAccountSelects();
     amountInput.value = ''; descInput.value = ''; categoryInput.value = '📦 Другое';
 });
 
-window.deleteTransaction = function(id) {
-    if (confirm('Удалить запись и вернуть деньги на счет?')) {
-        const tx = transactions.find(t => t.id === id);
-        if (tx && tx.type === 'expense') {
-            const account = accounts.find(a => a.id === tx.accountId);
-            if (account) account.balance += tx.amount;
-            transactions = transactions.filter(t => t.id !== id);
-            saveData();
-            updateAllAccountSelects();
-        }
-    }
-};
-
 // 6. Логика Доходов
 addIncomeBtn.addEventListener('click', () => {
     const amount = parseFloat(incomeAmountInput.value);
     const accountId = parseInt(incomeAccountSelect.value);
-    let category = incomeTypeSelect.value;    let description = incomeDescInput.value.trim();
+    let category = incomeTypeSelect.value;
+    let description = incomeDescInput.value.trim();
 
     if (category === '✍️ Другое' && !description) description = 'Доход';
     if (category !== '✍️ Другое' && description) description = `${category}: ${description}`;
@@ -254,18 +266,22 @@ addIncomeBtn.addEventListener('click', () => {
     const account = accounts.find(a => a.id === accountId);
     if (account) account.balance += amount;
 
-    transactions.push({ id: Date.now(), type: 'income', accountId, amount, description, category, date: new Date().toLocaleDateString('ru-RU') });
+    transactions.push({ 
+        id: Date.now(), type: 'income', accountId, amount, description, category, 
+        date: new Date().toLocaleDateString('ru-RU') 
+    });
+    
     saveData();
     updateAllAccountSelects();
     incomeAmountInput.value = ''; incomeDescInput.value = ''; incomeTypeSelect.value = '💼 Зарплата';
 });
 
-function renderIncomes() {
+function renderIncomesAndTransfers() {
     incomeList.innerHTML = '';
     let monthSum = 0;
     const today = new Date();
     
-    // Фильтруем только доходы за текущий месяц для верхней цифры
+    // Считаем доход только за текущий месяц для верхней цифры
     const monthIncomes = transactions.filter(t => {
         if (t.type !== 'income') return false;
         const txDate = new Date(t.date.split('.').reverse().join('-'));
@@ -275,39 +291,45 @@ function renderIncomes() {
     monthIncomes.forEach(t => monthSum += t.amount);
     monthIncomeTotal.textContent = monthSum.toFixed(2) + ' ₽';
 
-    // Показываем все доходы в списке (отсортированные по убыванию ID)
-    const allIncomes = transactions.filter(t => t.type === 'income').sort((a, b) => b.id - a.id);
+    // Показываем в списке и доходы, и переводы
+    const relevantTx = transactions        .filter(t => t.type === 'income' || t.type === 'transfer')
+        .sort((a, b) => b.id - a.id);
     
-    allIncomes.forEach(t => {
-        const acc = accounts.find(a => a.id === t.accountId) || { name: 'Неизвестно', icon: '❓' };
+    relevantTx.forEach(t => {
         const li = document.createElement('li');
         li.className = 'transaction-item';
-        li.innerHTML = `
-            <div class="t-info">
-                <span class="t-desc">${t.description}</span>
-                <span class="t-date">${t.date} • ${acc.icon} ${acc.name}</span>
-            </div>
-            <div class="t-right">
-                <span class="t-amount income">+${t.amount.toFixed(2)} ₽</span>
-                <button class="btn-delete" onclick="deleteIncome(${t.id})">🗑️</button>
-            </div>
-        `;
-        incomeList.appendChild(li);    });
-    emptyIncomeState.style.display = allIncomes.length ? 'none' : 'block';
-}
-
-window.deleteIncome = function(id) {
-    if (confirm('Удалить эту запись о доходе и списать сумму со счета?')) {
-        const tx = transactions.find(t => t.id === id);
-        if (tx && tx.type === 'income') {
-            const account = accounts.find(a => a.id === tx.accountId);
-            if (account) account.balance -= tx.amount;
-            transactions = transactions.filter(t => t.id !== id);
-            saveData();
-            updateAllAccountSelects();
+        
+        if (t.type === 'income') {
+            const acc = accounts.find(a => a.id === t.accountId) || { name: 'Удален', icon: '❓' };
+            li.innerHTML = `
+                <div class="t-info">
+                    <span class="t-desc">${t.description}</span>
+                    <span class="t-date">${t.date} • ${acc.icon} ${acc.name}</span>
+                </div>
+                <div class="t-right">
+                    <span class="t-amount income">+${t.amount.toFixed(2)} ₽</span>
+                    <button class="btn-delete" onclick="deleteItem(${t.id})">🗑️</button>
+                </div>
+            `;
+        } else if (t.type === 'transfer') {
+            const fromAcc = accounts.find(a => a.id === t.fromAccountId) || { name: 'Удален', icon: '❓' };
+            const toAcc = accounts.find(a => a.id === t.toAccountId) || { name: 'Удален', icon: '❓' };
+            li.innerHTML = `
+                <div class="t-info">
+                    <span class="t-desc">🔄 ${t.description}</span>
+                    <span class="t-date">${t.date}</span>
+                </div>
+                <div class="t-right">
+                    <span class="t-amount transfer">${t.amount.toFixed(2)} ₽</span>
+                    <button class="btn-delete" onclick="deleteItem(${t.id})">🗑️</button>
+                </div>
+            `;
         }
-    }
-};
+        incomeList.appendChild(li);
+    });
+    
+    emptyIncomeState.style.display = relevantTx.length ? 'none' : 'block';
+}
 
 // 7. Логика Переводов
 transferBtn.addEventListener('click', () => {
@@ -320,28 +342,52 @@ transferBtn.addEventListener('click', () => {
 
     const fromAcc = accounts.find(a => a.id === fromId);
     const toAcc = accounts.find(a => a.id === toId);
-
-    if (fromAcc.balance < amount) return alert(`Недостаточно средств на счете ${fromAcc.name}`);
+    if (fromAcc.balance < amount) return alert(`Недостаточно средств на счете "${fromAcc.name}"`);
 
     // Выполняем перевод
     fromAcc.balance -= amount;
     toAcc.balance += amount;
 
-    // Записываем как транзакцию типа 'transfer'
     transactions.push({
         id: Date.now(),
         type: 'transfer',
         fromAccountId: fromId,
         toAccountId: toId,
         amount: amount,
-        description: `Перевод: ${fromAcc.name} → ${toAcc.name}`,
+        description: `${fromAcc.name} → ${toAcc.name}`,
         date: new Date().toLocaleDateString('ru-RU')
     });
 
     saveData();
     updateAllAccountSelects();
     transferAmountInput.value = '';
-    alert(`Успешно переведено ${amount} ₽`);});
+    alert(`Успешно переведено ${amount} ₽`);
+});
 
-// Запуск
-loadData();
+// 8. Универсальное удаление (Безопасное)
+window.deleteItem = function(id) {
+    const tx = transactions.find(t => t.id === id);
+    if (!tx) return;
+    if (!confirm('Удалить эту операцию? Баланс счетов будет пересчитан.')) return;
+
+    // Отменяем влияние операции на балансы
+    if (tx.type === 'expense') {
+        const acc = accounts.find(a => a.id === tx.accountId);
+        if (acc) acc.balance += tx.amount; // Возвращаем деньги
+    } else if (tx.type === 'income') {
+        const acc = accounts.find(a => a.id === tx.accountId);
+        if (acc) acc.balance -= tx.amount; // Забираем начисленное
+    } else if (tx.type === 'transfer') {
+        const fromAcc = accounts.find(a => a.id === tx.fromAccountId);
+        const toAcc = accounts.find(a => a.id === tx.toAccountId);
+        if (fromAcc) fromAcc.balance += tx.amount; // Возвращаем отправителю
+        if (toAcc) toAcc.balance -= tx.amount;     // Забираем у получателя
+    }
+
+    // Удаляем из массива
+    transactions = transactions.filter(t => t.id !== id);
+    saveData();
+    updateAllAccountSelects();
+};
+
+// Запуск приложенияloadData();
