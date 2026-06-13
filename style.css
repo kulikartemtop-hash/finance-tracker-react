@@ -1,52 +1,62 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { 
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-    background-color: #f2f2f7; 
-    color: #1c1c1e;
-    -webkit-tap-highlight-color: transparent;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+    background-color: #f2f2f7; color: #1c1c1e;
+    -webkit-tap-highlight-color: transparent; padding-bottom: 80px;
 }
 .app-container { max-width: 500px; margin: 0 auto; padding: 20px; }
+
+.view { display: none; }
+.view.active { display: block; }
 
 .header { text-align: center; margin-bottom: 20px; }
 .header h1 { font-size: 24px; margin-bottom: 15px; }
 .balance-card { background: #007aff; color: white; padding: 20px; border-radius: 16px; }
+.balance-card.expense-card { background: #ff3b30; }
+.balance-card.income-card { background: #34c759; } /* Зеленый для доходов */
 .balance-card span { font-size: 14px; opacity: 0.9; }
 .balance-card h2 { font-size: 36px; margin-top: 5px; }
 
 .card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
 .card h3 { font-size: 18px; margin-bottom: 15px; }
+.transfer-card { border: 2px solid #007aff; background: #f0f8ff; } /* Выделяем блок переводов */
+
+.accounts-list { list-style: none; margin-bottom: 15px; }
+.account-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #f2f2f7; }
+.acc-info { display: flex; align-items: center; gap: 12px; }
+.acc-icon { font-size: 24px; }
+.acc-name { font-weight: 600; font-size: 16px; }
+.acc-balance { font-weight: 700; color: #1c1c1e; }
+.btn-add-account { width: 100%; background: #f2f2f7; color: #007aff; border: 1px dashed #007aff; padding: 12px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; }
+
+.filter-buttons { display: flex; gap: 10px; background: #f2f2f7; padding: 4px; border-radius: 12px; }
+.filter-btn { flex: 1; background: transparent; border: none; padding: 10px; border-radius: 10px; font-size: 14px; font-weight: 600; color: #8e8e93; cursor: pointer; }
+.filter-btn.active { background: white; color: #1c1c1e; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 
 #cameraInput { display: none; }
-.btn-scan { 
-    width: 100%; background: #34c759; color: white; border: none; padding: 16px; 
-    border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-bottom: 15px;
-}
+.btn-scan { width: 100%; background: #34c759; color: white; border: none; padding: 16px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-bottom: 15px; }
 .btn-scan:disabled { background: #a0a0a5; }
 
 .input-group { display: flex; flex-direction: column; gap: 10px; }
-.input-group input { 
-    padding: 14px; border: 1px solid #d1d1d6; border-radius: 10px; font-size: 16px; outline: none; 
-}
-.input-group input:focus { border-color: #007aff; }
-.btn-add { 
-    background: #007aff; color: white; border: none; padding: 14px; border-radius: 10px; 
-    font-size: 16px; font-weight: 600; cursor: pointer;
-}
-.btn-add:disabled { background: #a0a0a5; }
+.input-group input, .input-group select { padding: 14px; border: 1px solid #d1d1d6; border-radius: 10px; font-size: 16px; outline: none; background: white; }
+.btn-add { background: #ff3b30; color: white; border: none; padding: 14px; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; }
+.btn-add-income { background: #34c759; color: white; border: none; padding: 14px; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; }
+.btn-transfer { background: #007aff; color: white; border: none; padding: 14px; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; }
 
 .transaction-list { list-style: none; }
-.transaction-item { 
-    display: flex; justify-content: space-between; align-items: center; 
-    padding: 12px 0; border-bottom: 1px solid #f2f2f7; 
-}
-.transaction-item:last-child { border-bottom: none; }
+.transaction-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f2f2f7; }
 .t-info { display: flex; flex-direction: column; }
 .t-desc { font-weight: 500; font-size: 15px; }
 .t-date { font-size: 13px; color: #8e8e93; margin-top: 2px; }
 .t-right { display: flex; align-items: center; gap: 12px; }
-.t-amount { font-weight: 600; color: #ff3b30; }
+.t-amount { font-weight: 600; }
+.t-amount.expense { color: #ff3b30; }
+.t-amount.income { color: #34c759; }
 .btn-delete { background: none; border: none; color: #8e8e93; cursor: pointer; padding: 4px; }
-.btn-delete:active { color: #ff3b30; }
 
 .loading { text-align: center; color: #007aff; font-weight: bold; margin: 10px 0; }
 .empty-state { text-align: center; color: #8e8e93; padding: 20px 0; }
+
+.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #e5e5ea; display: flex; justify-content: space-around; padding: 8px 0; max-width: 500px; margin: 0 auto; z-index: 100; }
+.nav-btn { background: none; border: none; font-size: 12px; font-weight: 600; color: #8e8e93; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
+.nav-btn.active { color: #007aff; }
