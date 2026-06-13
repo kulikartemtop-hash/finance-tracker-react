@@ -10,50 +10,123 @@
 </head>
 <body>
 
-    <div class="app-container">
-        <header class="header">
-            <h1>💰 Мои Финансы</h1>
-            <div class="balance-card">
-                <span>Общий расход</span>
-                <h2 id="totalBalance">0.00 ₽</h2>
+    <!-- ВКЛАДКА 1: СЧЕТА -->
+    <div id="accountsView" class="view active">
+        <div class="app-container">
+            <header class="header">
+                <h1>🏦 Мои Счета</h1>
+                <div class="balance-card">
+                    <span>Общий баланс</span>
+                    <h2 id="totalBalance">0.00 ₽</h2>
+                </div>
+            </header>
+            <div class="card">
+                <h3>Ваши счета</h3>
+                <ul id="accountsList" class="accounts-list"></ul>
+                <button class="btn-add-account" id="addAccountBtn">+ Добавить счет</button>
             </div>
-        </header>
-
-        <div class="card">
-            <h3>📸 Добавить расход</h3>
-            
-            <input type="file" id="cameraInput" accept="image/*" capture="environment">
-            <button class="btn-scan" id="scanBtn">Сканировать чек</button>
-            
-            <div id="loading" class="loading" style="display: none;">
-                ⏳ Распознаю текст... <span id="progress">0</span>%
-            </div>
-
-            <div class="input-group">
-                <input type="number" id="amountInput" placeholder="Сумма (₽)" step="0.01">
-                <input type="text" id="descInput" placeholder="Описание (например: Продукты)">
-                
-                <!-- Новый элемент: выбор категории -->
-                <select id="categoryInput">
-                    <option value="📦 Другое">📦 Другое</option>
-                    <option value="🛒 Продукты">🛒 Продукты</option>
-                    <option value="🚕 Транспорт">🚕 Транспорт</option>
-                    <option value="🍔 Кафе">🍔 Кафе и рестораны</option>
-                    <option value="💊 Здоровье">💊 Здоровье и аптеки</option>
-                    <option value="🛍️ Покупки">🛍️ Одежда и покупки</option>
-                    <option value="🏠 Дом">🏠 Дом и ЖКХ</option>
-                </select>
-
-                <button class="btn-add" id="addBtn">Добавить</button>
-            </div>
-        </div>
-
-        <div class="card">
-            <h3>📜 История операций</h3>
-            <ul id="transactionList" class="transaction-list"></ul>
-            <p id="emptyState" class="empty-state">Пока нет операций. Отсканируйте чек!</p>
         </div>
     </div>
+
+    <!-- ВКЛАДКА 2: РАСХОДЫ -->
+    <div id="expensesView" class="view">
+        <div class="app-container">
+            <header class="header">
+                <h1>📊 Расходы</h1>
+                <div class="balance-card expense-card">
+                    <span id="periodLabel">Расход за месяц</span>
+                    <h2 id="periodTotal">0.00 ₽</h2>
+                </div>
+            </header>
+            <div class="card">
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-filter="month">Месяц</button>
+                    <button class="filter-btn" data-filter="week">Неделя</button>
+                    <button class="filter-btn" data-filter="today">Сегодня</button>
+                </div>
+            </div>
+            <div class="card">
+                <h3>📸 Добавить расход</h3>
+                <input type="file" id="cameraInput" accept="image/*" capture="environment">                <button class="btn-scan" id="scanBtn">Сканировать чек</button>
+                <div id="loading" class="loading" style="display: none;">⏳ Распознаю... <span id="progress">0</span>%</div>
+                <div class="input-group">
+                    <select id="accountSelect"></select>
+                    <input type="number" id="amountInput" placeholder="Сумма (₽)" step="0.01">
+                    <input type="text" id="descInput" placeholder="Описание">
+                    <select id="categoryInput">
+                        <option value="📦 Другое">📦 Другое</option>
+                        <option value="🛒 Продукты">🛒 Продукты</option>
+                        <option value="🚕 Транспорт">🚕 Транспорт</option>
+                        <option value="🍔 Кафе">🍔 Кафе и рестораны</option>
+                        <option value="💊 Здоровье">💊 Здоровье</option>
+                        <option value="🛍️ Покупки">🛍️ Покупки</option>
+                        <option value="🏠 Дом">🏠 Дом и ЖКХ</option>
+                    </select>
+                    <button class="btn-add" id="addBtn">Добавить расход</button>
+                </div>
+            </div>
+            <div class="card">
+                <h3>📜 История расходов</h3>
+                <ul id="transactionList" class="transaction-list"></ul>
+                <p id="emptyState" class="empty-state">Нет операций за этот период</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ВКЛАДКА 3: ДОХОДЫ И ПЕРЕВОДЫ -->
+    <div id="incomeView" class="view">
+        <div class="app-container">
+            <header class="header">
+                <h1>💸 Доходы и Переводы</h1>
+                <div class="balance-card income-card">
+                    <span>Доход за месяц</span>
+                    <h2 id="monthIncomeTotal">0.00 ₽</h2>
+                </div>
+            </header>
+
+            <!-- Форма добавления дохода -->
+            <div class="card">
+                <h3>➕ Добавить доход</h3>
+                <div class="input-group">
+                    <select id="incomeTypeSelect">
+                        <option value="💼 Зарплата">💼 Зарплата</option>
+                        <option value="🎁 Подарок">🎁 Подарок</option>
+                        <option value="💸 Кэшбэк">💸 Кэшбэк / Возврат</option>
+                        <option value="📈 Инвестиции">📈 Инвестиции / Дивиденды</option>
+                        <option value="✍️ Другое">✍️ Другое (вписать ниже)</option>
+                    </select>
+                    <input type="text" id="incomeDescInput" placeholder="Описание (например: От мамы, Фриланс)">
+                    <select id="incomeAccountSelect"></select>                    <input type="number" id="incomeAmountInput" placeholder="Сумма (₽)" step="0.01">
+                    <button class="btn-add-income" id="addIncomeBtn">Зачислить доход</button>
+                </div>
+            </div>
+
+            <!-- Форма перевода между счетами -->
+            <div class="card transfer-card">
+                <h3>🔄 Перевод между счетами</h3>
+                <div class="input-group">
+                    <select id="transferFromSelect"></select>
+                    <div style="text-align: center; color: #8e8e93; font-size: 20px;">⬇️</div>
+                    <select id="transferToSelect"></select>
+                    <input type="number" id="transferAmountInput" placeholder="Сумма перевода (₽)" step="0.01">
+                    <button class="btn-transfer" id="transferBtn">Перевести</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>📜 История доходов</h3>
+                <ul id="incomeList" class="transaction-list"></ul>
+                <p id="emptyIncomeState" class="empty-state">Пока нет доходов</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- НИЖНЯЯ НАВИГАЦИЯ (3 вкладки) -->
+    <nav class="bottom-nav">
+        <button class="nav-btn active" data-view="accountsView">🏦<br>Счета</button>
+        <button class="nav-btn" data-view="expensesView">📊<br>Расходы</button>
+        <button class="nav-btn" data-view="incomeView">💸<br>Доходы</button>
+    </nav>
 
     <script src="app.js"></script>
 </body>
