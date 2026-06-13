@@ -62,11 +62,11 @@
                         <option value="🛍️ Покупки">🛍️ Покупки</option>
                         <option value="🏠 Дом">🏠 Дом и ЖКХ</option>
                     </select>
-                    <button class="btn-add" id="addBtn">Добавить расход</button>
+                    <button class="btn-add btn-expense" id="addBtn">Добавить расход</button>
                 </div>
             </div>
             <div class="card">
-                <h3>📜 История расходов</h3>
+                <h3>📜 История операций</h3>
                 <ul id="transactionList" class="transaction-list"></ul>
                 <p id="emptyState" class="empty-state">Нет операций за этот период</p>
             </div>
@@ -97,7 +97,7 @@
                     </select>
                     <input type="text" id="incomeDescInput" placeholder="Описание (например: От мамы, Фриланс)">
                     <select id="incomeAccountSelect"></select>                    <input type="number" id="incomeAmountInput" placeholder="Сумма (₽)" step="0.01">
-                    <button class="btn-add-income" id="addIncomeBtn">Зачислить доход</button>
+                    <button class="btn-add btn-income" id="addIncomeBtn">Зачислить доход</button>
                 </div>
             </div>
 
@@ -106,22 +106,22 @@
                 <h3>🔄 Перевод между счетами</h3>
                 <div class="input-group">
                     <select id="transferFromSelect"></select>
-                    <div style="text-align: center; color: #8e8e93; font-size: 20px;">⬇️</div>
+                    <div style="text-align: center; color: #8e8e93; font-size: 20px; margin: -5px 0;">⬇️</div>
                     <select id="transferToSelect"></select>
                     <input type="number" id="transferAmountInput" placeholder="Сумма перевода (₽)" step="0.01">
-                    <button class="btn-transfer" id="transferBtn">Перевести</button>
+                    <button class="btn-add btn-transfer" id="transferBtn">Перевести</button>
                 </div>
             </div>
 
             <div class="card">
-                <h3>📜 История доходов</h3>
+                <h3>📜 История доходов и переводов</h3>
                 <ul id="incomeList" class="transaction-list"></ul>
-                <p id="emptyIncomeState" class="empty-state">Пока нет доходов</p>
+                <p id="emptyIncomeState" class="empty-state">Пока нет записей</p>
             </div>
         </div>
     </div>
 
-    <!-- НИЖНЯЯ НАВИГАЦИЯ (3 вкладки) -->
+    <!-- НИЖНЯЯ НАВИГАЦИЯ -->
     <nav class="bottom-nav">
         <button class="nav-btn active" data-view="accountsView">🏦<br>Счета</button>
         <button class="nav-btn" data-view="expensesView">📊<br>Расходы</button>
